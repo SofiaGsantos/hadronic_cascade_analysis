@@ -112,7 +112,7 @@ void plot(const std::map<double, double>& probability) {
     g->SetMarkerStyle(20);
     g->SetMarkerColor(kRed);
     g->GetXaxis()->SetTitle("Time [fm/c]");
-    g->GetYaxis()->SetTitle("#frac{K^{*0}}{K^{-}")
+    g->GetYaxis()->SetTitle("#frac{K^{*0}}{K^{-}");
     g->GetXaxis()->SetLimits(0, 120);
     g->Draw("AP");
 
@@ -120,7 +120,7 @@ void plot(const std::map<double, double>& probability) {
 }
 
 int main() {
-    std::ifstream list("teste.txt");
+    std::ifstream list("test.txt");
     if (!list.is_open()) {
         std::cerr << "Error to open files list (teste.txt).\n";
     }
