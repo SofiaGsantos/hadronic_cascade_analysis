@@ -9,110 +9,10 @@
 #include <algorithm>
 #include <sstream>
 #include <fstream>
-
-// ROOT
-#include "TCanvas.h"
-#include "TGraph.h"
-#include "TAxis.h"
-#include "TStyle.h"
+#include "utils.h"
 
 using namespace std;
 
-//identification of columns
-// --------------------------------------------------------------------------------
-const int ID   = 10;
-const int PDG  = 9;
-// --------------------------------------------------------------------------------
-
-//support structure
-struct ParticleInfo {
-    int id{};
-    int pdg{};
-};
-
-
-// functions
-
-// 1) helps to identify a decay
-// in the file, an interaction is identify by "# interaction" in the beginning of the line
-static inline bool starts_with(const string &s, const string &prefix) {         //const string &s > Read-only reference
-    return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
-}
-
-//2) split_tokens take a string (line) and split it into words separated by spaces
-//ex:   "  K*  313   resonance   0.892 "  
-//     ["K*", "313", "resonance", "0.892"]
-static vector<string> split_tokens(const string &line) {
-    istringstream iss(line);
-    vector<string> tk;
-    string t;
-    while (iss >> t) tk.push_back(t);
-    return tk;
-}
-
-//3) take a line that contains something like:
-//in 3 out 2 type 10
-//and extract the numeric values.
-static bool parse_header_fields(const string& hdr, int& inN, int& outN, int& type) {
-    inN = outN = -1; type = -1;
-    auto tk = split_tokens(hdr);
-    for (size_t i = 0; i + 1 < tk.size(); ++i) {
-        if (tk[i] == "in")   { inN  = stoi(tk[i+1]); }
-        if (tk[i] == "out")  { outN = stoi(tk[i+1]); }
-        if (tk[i] == "type") { type = stoi(tk[i+1]); }
-    }
-    return (inN >= 0 && outN >= 0 && type >= 0);
-}
-
-
-//4) extracts the final number of particles from each event
-static int parse_Kminus_final(const string& hdr) {
-    auto tk = split_tokens(hdr);
-    int finalparticles = 0;
-    for (size_t i = 0; i + 1 < tk.size(); ++i) {
-        if (tk[i] ==  "out" ) { finalparticles = stoi(tk[i+1]); }
-    }
-    return (finalparticles);
-}
-
-//5) add information to the "particle" structure according to the particle's line
-static bool parse_particle_row(const string& line, ParticleInfo& p) {
-    auto cols = split_tokens(line);
-    if ((int)cols.size() <= ID) return false;
-    try {
-        p.id        = stoi(cols[ID]);
-        p.pdg       = stoi(cols[PDG]);
-    } catch (...) { return false; }
-    return true;
-}
-
-//5) draw the graph of the ratio K*/K-
-// void plot(const map<double, double>& probability) {
-//     if (probability.empty()) {
-//         cerr << "Warning: Empty probability map!\n";
-//         return;
-//     }
-//     vector<double> time, prob;
-//     time.reserve(probability.size());
-//     prob.reserve(probability.size());
-//     for (const auto& kv : probability) {
-//         time.push_back(kv.first);
-//         prob.push_back(kv.second);
-//     }
-
-//     TCanvas* c = new TCanvas("c", " K^{*0}/K^{-}", 1200, 600);
-//     gStyle->SetOptStat(0);
-
-//     TGraph* g = new TGraph(time.size(), &time[0], &prob[0]);
-//     g->SetMarkerStyle(20);
-//     g->SetMarkerColor(kRed);
-//     g->GetXaxis()->SetTitle("Time [fm/c]");
-//     g->GetYaxis()->SetTitle("#frac{K^{*0}}{K^{-}}");
-//     g->GetXaxis()->SetLimits(0, 120);
-//     g->Draw("AP");
-
-//     c->SaveAs("Ratio.pdf");
-// }
 
 int main() {
     ifstream list("test.txt");
@@ -189,7 +89,6 @@ int main() {
              if (starts_with(line, "# event " + to_string(event_number) + " out")){
                 vector <int> final_Kminus;             //IDs of K- that reach the detectors
                 cout << "found the end of the event \n";
-                cout << "Vou ler " << parse_Kminus_final(line) << " linhas do bloco final\n";
                 for (int i=0; i < parse_Kminus_final(line); ){
                     string pline;
                     if (!getline(fin, pline)) break;

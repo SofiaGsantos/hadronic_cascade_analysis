@@ -1,5 +1,5 @@
 //The purpose of this code is obtain the multiplicity of the events 
-//Here we consider just charged particles with η < 0.5
+//Here we consider just charged particles with -0.5< η < 0.5
 
 #include <iostream>
 #include <vector>

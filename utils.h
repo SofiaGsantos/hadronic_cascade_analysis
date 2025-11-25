@@ -21,6 +21,8 @@ const int PX   = 6;
 const int PY   = 7;
 const int PZ   = 8;
 const int Q    = 11;
+const int ID   = 10;
+const int PDG  = 9;
 // --------------------------------------------------------------------------------
 
 //support structure
@@ -30,6 +32,8 @@ struct ParticleInfo {
     double py{};
     double pz{};
     int charge{};
+    int id{};
+    int pdg{};
 };
 
 
@@ -82,11 +86,13 @@ static bool parse_particle_row(const string& line, ParticleInfo& p) {
     auto cols = split_tokens(line);
     if ((int)cols.size() <= Q) return false;
     try {
-        p.time        = stod(cols[TIME]);
+        p.time     = stod(cols[TIME]);
         p.px       = stod(cols[PX]);
         p.py       = stod(cols[PY]);
         p.pz       = stod(cols[PZ]);
-        p.charge       = stoi(cols[Q]);
+        p.charge   = stoi(cols[Q]);
+        p.id       = stoi(cols[ID]);
+        p.pdg      = stoi(cols[PDG]);
     } catch (...) { return false; }
     return true;
 }
