@@ -64,16 +64,9 @@ static bool parse_header_fields(const string& hdr, int& inN, int& outN, int& typ
     return (inN >= 0 && outN >= 0 && type >= 0);
 }
 
-static int parse_event_line(const string& hdr) {
-    int event_number = -1;
-    auto tk = split_tokens(hdr);
-    for (size_t i = 0; i + 1 < tk.size(); ++i) {
-        if (tk[i] == "event" && tk[i+2] == "in")  { event_number  = stoi(tk[i+1]); }
-    }
-    return (event_number);
-}
 
-static int parse_Kminus_final(const string& hdr, int num) {
+//4) extracts the final number of particles from each event
+static int parse_Kminus_final(const string& hdr) {
     auto tk = split_tokens(hdr);
     int finalparticles = 0;
     for (size_t i = 0; i + 1 < tk.size(); ++i) {
@@ -82,7 +75,7 @@ static int parse_Kminus_final(const string& hdr, int num) {
     return (finalparticles);
 }
 
-//4)add information to the "particle" structure according to the particle's line
+//5) add information to the "particle" structure according to the particle's line
 static bool parse_particle_row(const string& line, ParticleInfo& p) {
     auto cols = split_tokens(line);
     if ((int)cols.size() <= ID) return false;
@@ -139,89 +132,94 @@ int main() {
             continue;
         }
         string line;
-        int event = 0;
-        int j = 0;
+        int event_number = 0;
         vector<vector<int>> active_daughter_ids;            // IDs of daughters still "alive" for detection
 
         while (getline(fin, line)) {
 
-            if ( event == j ){ 
+            if (starts_with(line, "# event")){
+                cout << line << "\n";
+                cout << "looking for " << event_number << "\n";
+            }
 
+            if (starts_with(line, "# event " + to_string(event_number) + " in")){ 
+                cout << "event number : " << event_number << "\n";
+            }
 
-                // ---------------------------------  large block for detecting decays  --------------------------------------
-                if (starts_with(line, "# interaction")) { 
+            // ---------------------------------  large block for detecting decays  --------------------------------------
+            if (starts_with(line, "# interaction")) { 
 
-                    // read header
-                    int inN=-1, outN=-1, type=-1;
-                    if (!parse_header_fields(line, inN, outN, type)) continue;
-                    //cout << "encontrou linha de interação \n";
+                // read header
+                int inN=-1, outN=-1, type=-1;
+                if (!parse_header_fields(line, inN, outN, type)) continue;
 
-                    // read inN + outN lines 
-                    vector<int> partspdg;
-                    vector<int> partsid;
-                    partspdg.reserve(inN + outN);
-                    partsid.reserve(inN + outN);
+                // read inN + outN lines 
+                vector<int> partspdg;
+                vector<int> partsid;
+                partspdg.reserve(inN + outN);
+                partsid.reserve(inN + outN);
 
-                    for (int i = 0; i < inN + outN; i++) {
-                        string pline;
-                        if (!getline(fin, pline)) break;
-                        ParticleInfo p;
-                        if (!parse_particle_row(pline, p)) continue;
-                        if (type == 5 ) {
-                            int pdg = p.pdg;
-                            int id = p.id;
-                            partspdg.push_back(pdg);
-                            partsid.push_back(id);
-                        }
-                    
+                for (int i = 0; i < inN + outN; i++) {
+                    string pline;
+                    if (!getline(fin, pline)) break;
+                    ParticleInfo p;
+                    if (!parse_particle_row(pline, p)) continue;
+                    if (type == 5 ) {
+                        int pdg = p.pdg;
+                        int id = p.id;
+                        partspdg.push_back(pdg);
+                        partsid.push_back(id);
                     }
+                    
+                }
 
-                    if (partspdg[0] == 313 || partspdg[0] == -313 || partspdg[0] == 323 || partspdg[0] == -323) {  //only K*(892): more abundant that decays into Kπ
-                        // daughter
-                        int d1 = partsid[1];
-                        int d2 = partsid[2];
+                if (partspdg[0] == 313 || partspdg[0] == -313 || partspdg[0] == 323 || partspdg[0] == -323) {  //only K*(892): more abundant that decays into Kπ
+                    // daughter
+                    int d1 = partsid[1];
+                    int d2 = partsid[2];
 
-                        // tracking daughters: map and vector of active IDs
-                        active_daughter_ids.push_back({d1, d2});
-                    } 
-                }   
+                    // tracking daughters: map and vector of active IDs
+                    active_daughter_ids.push_back({d1, d2});
+                } 
+            }   
 
 
                 // ---------------------------------  large block to count the particles that reached the detectors  --------------------------------------
             
-                if (starts_with(line, "# event " + to_string(event) + " out")){
-                    vector <int> final_Kminus;             //IDs of K- that reach the detectors
+             if (starts_with(line, "# event " + to_string(event_number) + " out")){
+                vector <int> final_Kminus;             //IDs of K- that reach the detectors
+                cout << "found the end of the event \n";
+                cout << "Vou ler " << parse_Kminus_final(line) << " linhas do bloco final\n";
+                for (int i=0; i < parse_Kminus_final(line); ){
+                    string pline;
+                    if (!getline(fin, pline)) break;
+                    ParticleInfo p;
+                    if (!parse_particle_row(pline, p)) continue;         
+                    if (p.pdg == 321 || p.pdg == -321){                  
+                        final_Kminus.push_back(p.id);
+                        int id = p.id;
 
-                    for (int i=0; i < parse_Kminus_final(line, event); ){
-                        string pline;
-                        if (!getline(fin, pline)) break;
-                        ParticleInfo p;
-                        if (!parse_particle_row(pline, p)) continue;         
-                        if (p.pdg == 321 || p.pdg == -321){                  
-                            final_Kminus.push_back(p.id);
-                            int id = p.id;
-
-                            for (size_t k = 0; k < active_daughter_ids.size(); ) {
-                                if (active_daughter_ids[k][0] == id || active_daughter_ids[k][1] == id) {
-                                    active_daughter_ids.erase(active_daughter_ids.begin() + k);
-                                } else {
-                                    k++;   
-                                }
+                        for (size_t k = 0; k < active_daughter_ids.size(); ) {
+                            if (active_daughter_ids[k][0] == id || active_daughter_ids[k][1] == id) {
+                                active_daughter_ids.erase(active_daughter_ids.begin() + k);
+                            } else {
+                                k++;   
                             }
                         }
                     }
-
-                    double ratio = (double(active_daughter_ids.size()) / double(final_Kminus.size()));
-                    ratios[j] = ratio;
-                    active_daughter_ids.clear();
-                    j+=1;
                 }
-            }
+
+                double ratio = (double(active_daughter_ids.size()) / double(final_Kminus.size()));
+                ratios[event_number] = ratio;
+                active_daughter_ids.clear();
+                 event_number++;
+             }
+
         }
     }
-    
+
     //------------------------ media on the oversamples ----------------------------
-    double sum = 0.0;
+    double sum = 0;
     for(const auto& par : ratios) {
         sum += par.second;     
     }
