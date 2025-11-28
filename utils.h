@@ -97,4 +97,11 @@ static bool parse_particle_row(const string& line, ParticleInfo& p) {
     return true;
 }
 
+//6) calculation of eta
+double eta(double px, double py, double pz)
+{
+    double p = sqrt(px*px + py*py + pz*pz);
+    return 0.5 * log( (p + pz) / (p - pz) );
+}
+
 #endif

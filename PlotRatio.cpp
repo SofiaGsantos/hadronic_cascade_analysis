@@ -16,7 +16,7 @@ int main() {
     {
         ifstream fin("multiplicity.txt");
         if (!fin.is_open()) {
-            cerr << "Erro ao abrir multiplicity.txt\n";
+            cerr << "Error to open multiplicity.txt\n";
             return 1;
         }
         double x;
@@ -29,7 +29,7 @@ int main() {
     {
         ifstream fin("ratios.txt");
         if (!fin.is_open()) {
-            cerr << "Erro ao abrir ratios.txt\n";
+            cerr << "Error to open ratios.txt\n";
             return 1;
         }
         double y;
@@ -40,7 +40,7 @@ int main() {
 
     // ----------------- check sizes -----------------
     if (multiplicity.size() != ratios.size()) {
-        cerr << "Listas com tamanhos diferentes!\n";
+        cerr << "Lists with different sizes!\n";
         return 1;
     }
 

@@ -8,13 +8,6 @@
 
 using namespace std;
 
-//calculation of eta
-double eta(double px, double py, double pz)
-{
-    double p = sqrt(px*px + py*py + pz*pz);
-    return 0.5 * log( (p + pz) / (p - pz) );
-}
-
 
 int main() {
     ifstream list("test.txt");

@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <map>
+#include <cmath>
 #include <vector>
 #include <algorithm>
 #include <sstream>
@@ -34,18 +35,9 @@ int main() {
         }
         string line;
         int event_number = 0;
-        vector<vector<int>> active_daughter_ids;            // IDs of daughters still "alive" for detection
+        vector<vector<int>> daughter_ids;            
 
         while (getline(fin, line)) {
-
-            if (starts_with(line, "# event")){
-                cout << line << "\n";
-                cout << "looking for " << event_number << "\n";
-            }
-
-            if (starts_with(line, "# event " + to_string(event_number) + " in")){ 
-                cout << "event number : " << event_number << "\n";
-            }
 
             // ---------------------------------  large block for detecting decays  --------------------------------------
             if (starts_with(line, "# interaction")) { 
@@ -73,14 +65,14 @@ int main() {
                     }
                     
                 }
-
-                if (partspdg[0] == 313 || partspdg[0] == -313 || partspdg[0] == 323 || partspdg[0] == -323) {  //only K*(892): more abundant that decays into Kπ
+                
+                if (partspdg[0] == 313 || partspdg[0] == -313 || partspdg[0] == 323 || partspdg[0] == -323 ) {  //only K*(892): more abundant that decays into Kπ
                     // daughter
                     int d1 = partsid[1];
                     int d2 = partsid[2];
 
                     // tracking daughters: map and vector of active IDs
-                    active_daughter_ids.push_back({d1, d2});
+                    daughter_ids.push_back({d1, d2});
                 } 
             }   
 
@@ -89,30 +81,47 @@ int main() {
             
              if (starts_with(line, "# event " + to_string(event_number) + " out")){
                 vector <int> final_Kminus;             //IDs of K- that reach the detectors
+                vector <int> final_daughters; 
                 cout << "found the end of the event \n";
                 for (int i=0; i < parse_Kminus_final(line); ){
                     string pline;
                     if (!getline(fin, pline)) break;
                     ParticleInfo p;
-                    if (!parse_particle_row(pline, p)) continue;         
-                    if (p.pdg == 321 || p.pdg == -321){                  
-                        final_Kminus.push_back(p.id);
-                        int id = p.id;
+                    if (!parse_particle_row(pline, p)) continue;  
+                    double et = eta(p.px, p.py, p.pz);
 
-                        for (size_t k = 0; k < active_daughter_ids.size(); ) {
-                            if (active_daughter_ids[k][0] == id || active_daughter_ids[k][1] == id) {
-                                active_daughter_ids.erase(active_daughter_ids.begin() + k);
-                            } else {
-                                k++;   
-                            }
-                        }
+                    if (p.pdg == 321 || p.pdg == -321 || p.pdg == 211 || p.pdg == -211 && ( et > -0.5 && et < 0.5)){ 
+                        final_daughters.push_back(p.id);              
+                    }
+                    
+                    if (p.pdg == 321 || p.pdg == -321 && ( et > -0.5 && et < 0.5)){
+                        final_Kminus.push_back(p.pdg);
                     }
                 }
 
-                double ratio = (double(active_daughter_ids.size()) / double(final_Kminus.size()));
+                size_t k = 0;
+                while (k < daughter_ids.size()) {
+
+                    int id1 = daughter_ids[k][0];
+                    int id2 = daughter_ids[k][1];
+
+                    bool ok1 = std::find(final_daughters.begin(), final_daughters.end(), id1) != final_daughters.end();
+                    bool ok2 = std::find(final_daughters.begin(), final_daughters.end(), id2) != final_daughters.end();
+
+                    if (ok1 && ok2) {
+                        // both daughter survived
+                        k++;
+                    } else {
+                        cout << "remove invalid daughter: (" << id1 << ", " << id2 << ")\n";
+                        daughter_ids.erase(daughter_ids.begin() + k);
+                    }
+                }
+
+                cout << "Kminus size : " << final_Kminus.size() << "\n";
+                double ratio = (double(daughter_ids.size()) / double(final_Kminus.size()));
                 y_values.push_back(ratio);
-                active_daughter_ids.clear();
-                 event_number++;
+                daughter_ids.clear();
+                event_number++;
             }
 
         }
