@@ -12,6 +12,8 @@
 
 using namespace std;
 
+const double pTmin = 0.2;   
+const double pTmax = 5.0;
 
 int main() {
     ifstream list("test.txt");
@@ -87,12 +89,13 @@ int main() {
                     ParticleInfo p;
                     if (!parse_particle_row(pline, p)) continue;  
                     double et = eta(p.px, p.py, p.pz);
+                    double pT = compute_pT (p.px, p.py);
 
-                    if (p.pdg == 311 || p.pdg == -311 || p.pdg == 22  && ( et > -0.5 && et < 0.5)){ 
+                    if (p.pdg == 311 || p.pdg == -311 || p.pdg == 22  && ( et > -0.5 && et < 0.5) && (pT >= pTmin && pT <= pTmax )){ 
                         final_daughters.push_back(p.id);              
                     }
                     
-                    if (p.pdg == 22 || p.pdg == 22 && ( et > -0.5 && et < 0.5)){
+                    if (p.pdg == 22 || p.pdg == 22 && ( et > -0.5 && et < 0.5) && (pT >= pTmin && pT <= pTmax )){
                         final_photon.push_back(p.pdg);
                     }
                 }

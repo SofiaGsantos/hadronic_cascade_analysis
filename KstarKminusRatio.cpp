@@ -14,6 +14,8 @@
 
 using namespace std;
 
+const double pTmin = 0.2;   
+const double pTmax = 5.0;
 
 int main() {
     ifstream list("test.txt");
@@ -66,7 +68,7 @@ int main() {
                     
                 }
                 
-                if (partspdg[0] == 313 || partspdg[0] == -313 || partspdg[0] == 323 || partspdg[0] == -323 ) {  //only K*(892): more abundant that decays into Kπ
+                if (partspdg[0] == 313 || partspdg[0] == -313 ) {  //only K*(892)⁰: more abundant that decays into Kπ
                     // daughter
                     int d1 = partsid[1];
                     int d2 = partsid[2];
@@ -89,12 +91,13 @@ int main() {
                     ParticleInfo p;
                     if (!parse_particle_row(pline, p)) continue;  
                     double et = eta(p.px, p.py, p.pz);
+                    double pT = compute_pT (p.px, p.py);
 
-                    if (p.pdg == 321 || p.pdg == -321 || p.pdg == 211 || p.pdg == -211 && ( et > -0.5 && et < 0.5)){ 
+                    if ( p.pdg == -321 || p.pdg == 211  && ( et > -0.5 && et < 0.5) && (pT >= pTmin && pT <= pTmax )){ 
                         final_daughters.push_back(p.id);              
                     }
                     
-                    if (p.pdg == 321 || p.pdg == -321 && ( et > -0.5 && et < 0.5)){
+                    if ( p.pdg == -321 && ( et > -0.5 && et < 0.5) && (pT >= pTmin && pT <= pTmax )){
                         final_Kminus.push_back(p.pdg);
                     }
                 }

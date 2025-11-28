@@ -104,4 +104,9 @@ double eta(double px, double py, double pz)
     return 0.5 * log( (p + pz) / (p - pz) );
 }
 
+//7) calculation of pT
+double compute_pT(double px, double py) {
+    return std::sqrt(px*px + py*py);
+}
+
 #endif

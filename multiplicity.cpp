@@ -8,6 +8,8 @@
 
 using namespace std;
 
+const double pTmin = 0.2;   
+const double pTmax = 5.0;
 
 int main() {
     ifstream list("test.txt");
@@ -46,7 +48,8 @@ int main() {
                     if (!parse_particle_row(pline, p)) continue;
                     if (p.charge == 0) continue;
                     double et = eta(p.px, p.py, p.pz);
-                    if ( et > -0.5 && et < 0.5){
+                    double pT = compute_pT (p.px, p.py);
+                    if ( et > -0.5 && et < 0.5 && (pT >= pTmin && pT <= pTmax )){
                         nch++;
                     }
                 }
