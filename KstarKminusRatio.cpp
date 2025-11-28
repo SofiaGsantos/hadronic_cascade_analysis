@@ -21,11 +21,12 @@ int main() {
     }
 
     string filename;
-    map <int,double> ratios;
+    vector <double> ratios;
 
     while (getline(list, filename)) {
         if (filename.empty()) continue;
 
+        vector <double> y_values;
         ifstream fin(filename);
         if (!fin.is_open()) {
             cerr << "Error to open: " << filename << "\n";
@@ -109,21 +110,27 @@ int main() {
                 }
 
                 double ratio = (double(active_daughter_ids.size()) / double(final_Kminus.size()));
-                ratios[event_number] = ratio;
+                y_values.push_back(ratio);
                 active_daughter_ids.clear();
                  event_number++;
-             }
+            }
 
         }
+        //------------------------ media on the oversamples ----------------------------
+        double sum = 0;
+        for(const auto& par : y_values) {
+            sum += par;     
+        }
+        double average = sum / y_values.size();
+        cout << "the ratio is " << average;
+        ratios.push_back(average);
+         
     }
-
-    //------------------------ media on the oversamples ----------------------------
-    double sum = 0;
-    for(const auto& par : ratios) {
-        sum += par.second;     
-    }
-    double average = sum / ratios.size();
-    cout << "a razão é " << average;
-    return(average);
+ofstream fout("ratios.txt");
+for (auto r : ratios) {
+    fout << r << "\n";
+}
+fout.close();
+return(-1);
 } 
     

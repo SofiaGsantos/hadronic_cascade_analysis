@@ -22,8 +22,9 @@ int main() {
         cerr << "Error to open files list.\n";
     }
 
+    vector<double> multiplicity;
     string filename;
-    vector<int> particles_per_event;
+
     while (getline(list, filename)) {
         if (filename.empty()) continue;
 
@@ -32,36 +33,49 @@ int main() {
             cerr << "Error to open: " << filename << "\n";
             continue;
         }
+        cout << "open file " << filename << "\n";
+
         string line;
-        int charged_particles = 0;
-        int event_number = 0 ;
+        int event_number = 0;
+        vector<double> x_values;
+
         while (getline(fin, line)) {
 
             if (starts_with(line, "# event " + to_string(event_number) + " out")){
-                event_number++;
-                cout << "found the end of the event \n";
-                cout << "there are "<< parse_Kminus_final(line) << " particles \n";
+                
+                cout << "found the end of an event \n";
+                int nch = 0;
+
                 for (int i=0; i < parse_Kminus_final(line); i++){
                     string pline;
                     if (!getline(fin, pline)) break;
                     ParticleInfo p;
                     if (!parse_particle_row(pline, p)) continue;
+                    if (p.charge == 0) continue;
                     double et = eta(p.px, p.py, p.pz);
-                    if (p.charge != 0){ // && et > -0.5 && et < 0.5
-                        charged_particles++;
+                    if ( et > -0.5 && et < 0.5){
+                        nch++;
                     }
                 }
-                particles_per_event.push_back(charged_particles);
-                charged_particles = 0;
+                double x = pow(nch, 1.0/3.0);
+                x_values.push_back(x);
+
+                event_number++;
             }
         }
+        //------------------------ media on the oversamples ----------------------------
+        double sum = 0;
+        for(const auto& par : x_values) {
+            sum += par;     
+        }
+        double average = sum / x_values.size();
+        cout << "the multiplicity is " << average;
+        multiplicity.push_back(average);
     }
-    //------------------------ media on the oversamples ----------------------------
-    double sum = 0;
-    for(const auto& par : particles_per_event) {
-        sum += par;     
-    }
-    double average = sum / particles_per_event.size();
-    cout << "the multiplicity is " << average;
-    return(average);
+ofstream fout("multiplicity.txt");
+for (auto m : multiplicity) {
+    fout << m << "\n";
+}
+fout.close();
+return -1;
 }
